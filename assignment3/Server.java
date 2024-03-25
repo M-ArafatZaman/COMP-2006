@@ -23,6 +23,7 @@ class Server {
     private static Boolean loggedIn = false;
     private static int attempts = 0;
     private static Boolean isGameOver = false; 
+    private static char[] code = {'1', '0', '5', '8'};
     
     // establishing a connection
     private static void setup() throws IOException {
@@ -130,10 +131,20 @@ class Server {
             inputline = inputline.trim();
             toConsole("Guessed: "+inputline);
             if (isGuessValid(inputline)) {
-                appendOutput("Guess is of valid format");
-                sendOutput();
+                int[] bullsCows = getBullsAndCows(inputline);
+                if (bullsCows[0] == 4) {
+                    toConsole("Correct!");
+                    appendOutput("You got it - goodbye!");
+                    sendOutput();
+                    disconnect();
+                } else {
+                    toConsole("Incorrect!");
+                    appendOutput(""+bullsCows[0]+" bull and "+bullsCows[1]+" cow.");
+                    sendOutput();
+                }
             } else {
-                appendOutput("Invalid format. Please enter 4 digits seperated by spaces");
+                appendOutput("Oops! You need to enter 4 digits separated by spaces.");
+                appendOutput("Try again:");
                 sendOutput();
             }
         }
@@ -150,17 +161,40 @@ class Server {
         }
         return true;
     }
-    
-    // repeatedly take input from client and send back in upper case
-    private static void echoClient() throws IOException
-    {
-        String inputLine;
-        while ((inputLine = in.readLine()) != null) {
-            appendOutput(inputLine.toUpperCase());
-            sendOutput();
-            toConsole(inputLine);
+
+    private static int[] getBullsAndCows(String guess) {
+        // TODO
+        int bulls = 0, cows = 0;
+        char[] guessChars = new char[4];
+        int curr = 0;
+        for (int i = 0; i < guess.length(); i++) {
+            if (guess.charAt(i) == ' ') continue;
+            guessChars[curr] = guess.charAt(i);
+            curr++;
         }
+
+        for (int i = 0; i < guessChars.length; i++) {
+            if (code[i] == guessChars[i]) {
+                guessChars[i] = '-';
+                bulls++;
+            }
+        }
+
+        for (int i = 0; i < guessChars.length; i++) {
+            for (int j = 0; j < code.length; j++) {
+                if (guessChars[i] == code[j]) {
+                    guessChars[i] = '-';
+                    cows++;
+                    break;
+                }
+            }
+        }
+
+        int[] res = {bulls, cows}; 
+
+        return res;
     }
+    
     
     private static void disconnect() throws IOException {
         out.close();
