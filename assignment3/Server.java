@@ -22,6 +22,7 @@ class Server {
     private static final int MAX_ATTEMPTS = 5;
     private static Boolean loggedIn = false;
     private static int attempts = 0;
+    private static Boolean isGameOver = false; 
     
     // establishing a connection
     private static void setup() throws IOException {
@@ -56,6 +57,11 @@ class Server {
         /* placing echo functionality into a separate private method allows it to be easily swapped for a different behaviour */
         //echoClient();
         login();
+        // Login is successful!
+        appendOutput("Welcome Daisy!");
+        appendOutput("Let's play Bulls and Cows!");
+        appendOutput("Guess my 4 digit code.");
+        playGuess();
         disconnect();
     }
 
@@ -68,31 +74,9 @@ class Server {
         Boolean password = false;
         while (!loggedIn && attempts < 5) {
             // Send request to get username
-            appendOutput("Enter username:");
-            toConsole("Username requested");
-            sendOutput();
-            attempts++;
-            inputline = in.readLine();
-            // Received input
-            toConsole("Name entered: "+inputline);
-            if (inputline.equals(USERNAME)) {
-                username = true;
-            }
-            
-
+            username = requestUsername();
             if (!username) continue;
-
-            // Send request to get password
-            appendOutput("Enter password:");
-            toConsole("Password requested");
-            sendOutput();
-            attempts++;
-            inputline = in.readLine();
-            // Received input
-            toConsole("Name entered: "+inputline);
-            if (inputline.equals(PASSWORD)) {
-                password = true;
-            }
+            password = requestPassword();
 
             if (password && username) {
                 loggedIn = true;
@@ -107,6 +91,64 @@ class Server {
             sendOutput();
             disconnect();
         }
+    }
+
+    private static Boolean requestUsername() throws IOException {
+        appendOutput("Enter username:");
+        toConsole("Username requested");
+        sendOutput();
+        attempts++;
+        String inputline = in.readLine();
+        // Received input
+        toConsole("Name entered: "+inputline);
+        if (inputline.equals(USERNAME)) {
+            return true;
+        }
+        return false;
+    }
+
+    private static Boolean requestPassword() throws IOException {
+        // Send request to get password
+        appendOutput("Enter password:");
+        toConsole("Password requested");
+        sendOutput();
+        attempts++;
+        String inputline = in.readLine();
+        // Received input
+        toConsole("Name entered: "+inputline);
+        if (inputline.equals(PASSWORD)) {
+            return true;
+        }
+        return false;
+    }
+
+    private static void playGuess() throws IOException {
+        appendOutput("Enter 4 digits, separated by spaces:");
+        sendOutput();
+        String inputline;
+        while (!isGameOver && (inputline = in.readLine()) != null) {
+            inputline = inputline.trim();
+            toConsole("Guessed: "+inputline);
+            if (isGuessValid(inputline)) {
+                appendOutput("Guess is of valid format");
+                sendOutput();
+            } else {
+                appendOutput("Invalid format. Please enter 4 digits seperated by spaces");
+                sendOutput();
+            }
+        }
+    }
+
+    private static Boolean isGuessValid(String guess) {
+        if (guess.length() != 7) return false;
+        for (int i = 0; i < guess.length(); i++) {
+            if (i % 2 == 1) {
+                if (guess.charAt(i) != ' ') return false;
+            } else {
+                if ((guess.charAt(i) - '0') < 0 || (guess.charAt(i) - '0') > 9 ) return false;
+            }
+        }
+        return true;
     }
     
     // repeatedly take input from client and send back in upper case
