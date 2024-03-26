@@ -9,6 +9,7 @@ import java.io.OutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.IOException;
+import java.util.Arrays;
 
 class Server {
     private static ServerSocket serverSocket;
@@ -49,8 +50,7 @@ class Server {
     // the initial message sent from server to client
     private static void sendGreeting()
     {
-        appendOutput("Welcome to MooNet!\n");
-        //sendOutput();
+        appendOutput("Greetings from MooNet!\n");
     }
     
     // what happens while client and server are connected
@@ -73,10 +73,13 @@ class Server {
         String inputline;
         Boolean username = false;
         Boolean password = false;
-        while (!loggedIn && attempts < 5) {
+        while (!loggedIn && attempts < MAX_ATTEMPTS) {
             // Send request to get username
             username = requestUsername();
-            if (!username) continue;
+            if (!username) {
+                appendOutput("Username not recognized\n");
+                continue;
+            }
             password = requestPassword();
 
             if (password && username) {
@@ -84,10 +87,11 @@ class Server {
             } else {
                 password = false;
                 username = false;
+                appendOutput("Failed authorization try again.\n");
             }
         }
 
-        if (attempts >= 5 && !loggedIn) {
+        if (attempts >= MAX_ATTEMPTS && !loggedIn) {
             appendOutput("Sorry, maximum attempt limit exceeded! Aborted session.");
             sendOutput();
             disconnect();
@@ -166,6 +170,7 @@ class Server {
         // TODO
         int bulls = 0, cows = 0;
         char[] guessChars = new char[4];
+        char[] codeChars = Arrays.copyOf(code, 4);;
         int curr = 0;
         for (int i = 0; i < guess.length(); i++) {
             if (guess.charAt(i) == ' ') continue;
@@ -173,17 +178,23 @@ class Server {
             curr++;
         }
 
+        // Check for bulls
         for (int i = 0; i < guessChars.length; i++) {
-            if (code[i] == guessChars[i]) {
+            if (codeChars[i] == guessChars[i]) {
                 guessChars[i] = '-';
+                codeChars[i] = '-';
                 bulls++;
             }
         }
 
+        // Check for cows
         for (int i = 0; i < guessChars.length; i++) {
-            for (int j = 0; j < code.length; j++) {
+            if (guessChars[i] == '-') continue;
+            for (int j = 0; j < codeChars.length; j++) {
+                if (codeChars[j] == '-') continue;
                 if (guessChars[i] == code[j]) {
                     guessChars[i] = '-';
+                    codeChars[j] = '-';
                     cows++;
                     break;
                 }
